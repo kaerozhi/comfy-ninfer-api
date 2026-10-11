@@ -1,0 +1,98 @@
+{
+  "1": {
+    "class_type": "NinferServer",
+    "inputs": {
+      "action": "ensure running",
+      "model_file": "Huihui-Qwen3.8-27B-abliterated-Swift-1.5-GSQ-RCO-IQ3_S-mtp.ninfer",
+      "force": false,
+      "language": "zh"
+    }
+  },
+  "2": {
+    "class_type": "NinferClient",
+    "inputs": {
+      "base_url": "http://127.0.0.1:8080/v1",
+      "auto_start": true,
+      "model_file": "Huihui-Qwen3.8-27B-abliterated-Swift-1.5-GSQ-RCO-IQ3_S-mtp.ninfer",
+      "idle_seconds": 120,
+      "keep_alive": false,
+      "api_key": "ninfer-local",
+      "max_retries": 1,
+      "timeout": 900
+    }
+  },
+  "3": {
+    "class_type": "NinferOptionSystemPrompt",
+    "inputs": {
+      "system_prompt": "你是一位乐于助人的中文助手。",
+      "skill": "(none)",
+      "other_options": ["4", 0]
+    }
+  },
+  "4": {
+    "class_type": "NinferOptionTemperature",
+    "inputs": {
+      "temperature": 0.7,
+      "other_options": ["5", 0]
+    }
+  },
+  "5": {
+    "class_type": "NinferOptionMaxTokens",
+    "inputs": {
+      "max_tokens": 2048,
+      "other_options": ["6", 0]
+    }
+  },
+  "6": {
+    "class_type": "NinferOptionReasoningEffort",
+    "inputs": {
+      "reasoning_effort": "low",
+      "other_options": ["7", 0]
+    }
+  },
+  "7": {
+    "class_type": "NinferOptionTopP",
+    "inputs": {
+      "top_p": 0.95,
+      "other_options": ["8", 0]
+    }
+  },
+  "8": {
+    "class_type": "NinferOptionTopK",
+    "inputs": {
+      "top_k": 20,
+      "other_options": ["9", 0]
+    }
+  },
+  "9": {
+    "class_type": "NinferOptionSeed",
+    "inputs": {
+      "seed": 123456789,
+      "other_options": ["10", 0]
+    }
+  },
+  "10": {
+    "class_type": "NinferOptionExtraBody",
+    "inputs": {
+      "extra_body": "{}",
+      "other_options": ["11", 0]
+    }
+  },
+  "11": {
+    "class_type": "NinferChat",
+    "inputs": {
+      "client": ["2", 0],
+      "options": ["3", 0],
+      "prompt": "请用一段话介绍 NInfer 的优点，并列出用到的采样参数。",
+      "model": "",
+      "force_regen": true,
+      "language": "zh"
+    }
+  },
+  "12": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": ["11", 0]
+    }
+  }
+}

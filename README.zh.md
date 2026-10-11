@@ -31,6 +31,24 @@
 把文件夹放进 `ComfyUI/custom_nodes/` 然后重启 ComfyUI。没有额外依赖：用的是
 ComfyUI 自带的 `openai`。
 
+## 示例工作流
+
+可以直接运行的图放在 [`workflows/`](workflows/) 里。把 `.json` 拖到 ComfyUI
+画布上（或 **Workflow → Open**）即可打开。
+
+| 文件 | 内容 |
+|---|---|
+| [`workflows/minimal_ninfer_chat.json`](workflows/minimal_ninfer_chat.json) | 最少接线：客户端 → 对话 → 预览 |
+| [`workflows/full_ninfer_chat.json`](workflows/full_ninfer_chat.json) | 全部节点接上，含参数链和服务控制 |
+
+**最常见的接线错误：** Server Control 节点的 **Status** 输出和 Chat 节点的
+**Model** 输入都是文本。若是把 Status → Model 接到一起，请求会以
+`openai.NotFoundError`（`model_not_found`）失败——服务器收到的是状态文本而不是
+模型 id。**Model 留空**即可，对话节点会自动探测服务器第一个模型 id；或者接一个
+来自客户端模型文件的真实模型 id。
+
+详细接线图见 [`workflows/README.md`](workflows/README.md)。
+
 ## 配置
 
 路径默认相对本文件推导，可用环境变量覆盖。

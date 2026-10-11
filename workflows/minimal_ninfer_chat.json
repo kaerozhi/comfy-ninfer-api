@@ -1,0 +1,37 @@
+{
+  "1": {
+    "class_type": "NinferClient",
+    "inputs": {
+      "base_url": "http://127.0.0.1:8080/v1",
+      "auto_start": true,
+      "model_file": "Huihui-Qwen3.8-27B-abliterated-Swift-1.5-GSQ-RCO-IQ3_S-mtp.ninfer",
+      "idle_seconds": 120,
+      "keep_alive": false,
+      "api_key": "ninfer-local",
+      "max_retries": 1,
+      "timeout": 900
+    }
+  },
+  "2": {
+    "class_type": "NinferChat",
+    "inputs": {
+      "client": [
+        "1",
+        0
+      ],
+      "prompt": "你好，请用一句话介绍你自己。",
+      "model": "",
+      "force_regen": true,
+      "language": "zh"
+    }
+  },
+  "3": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": [
+        "2",
+        0
+      ]
+    }
+  }
+}

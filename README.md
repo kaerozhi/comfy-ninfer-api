@@ -34,6 +34,26 @@ how you run a 27B local LLM and ComfyUI on the same 24 GB card: NInfer holds
 Copy the folder into `ComfyUI/custom_nodes/` and restart ComfyUI. There are no
 extra dependencies: it uses `openai`, which ComfyUI already ships.
 
+## Example workflows
+
+Ready-to-run graphs live in [`workflows/`](workflows/). Open one by dragging the
+`.json` file onto the ComfyUI canvas (or **Workflow → Open**).
+
+| File | What it shows |
+|---|---|
+| [`workflows/minimal_ninfer_chat.json`](workflows/minimal_ninfer_chat.json) | Smallest correct wiring: Client → Chat → preview |
+| [`workflows/full_ninfer_chat.json`](workflows/full_ninfer_chat.json) | All nodes connected, including the options chain and Server |
+
+**The #1 wiring mistake:** the Server Control node's **Status** output and the
+Chat node's **Model** input are *both* text. If you connect Status → Model, the
+request fails with an `openai.NotFoundError` (`model_not_found` — the server
+recieves the status text instead of a model id). Leave **Model empty** and the
+chat node auto-detects the first model the server reports, or connect a real
+model id from the Client's model files.
+
+See [`workflows/README.md`](workflows/README.md) for a step-by-step diagram of
+both graphs.
+
 ## Configuration
 
 Paths are discovered relative to this file and can be overridden with
