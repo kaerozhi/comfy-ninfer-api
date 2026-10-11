@@ -64,6 +64,14 @@ NInfer - Client ──Client──▶ NInfer - Chat ──answer──▶ Previe
 > `action` back to `ensure running` and disconnect the Server Control's **Run
 > After** wire — it then behaves as a standalone node.
 
+![chat → stop → release VRAM to a GPU-hungry downstream](handoff-vram.png)
+
+The diagram shows the key idea: the wire that **doubles back** from
+`Chat.answer` into **Server Control.** Run After** is what turns "run a chat"
+into "run a chat, _then_ hand the GPU back". Execution order is locked purely by
+the wiring — nobody has to guess. `Done` then hands control to the next
+VRAM-hungry node so it only starts once the server is gone.
+
 ### The options chain in detail
 
 Every `NInfer - Option*` node has one `Options` input (optional) and one

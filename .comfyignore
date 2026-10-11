@@ -4,3 +4,6 @@
 # Marketing assets are referenced by URL, not shipped in the archive.
 icon.png
 banner.png
+
+# Dev-only diagram renderer, kept in git to reproduce the README image.
+workflows/_draw_handoff.py
