@@ -1,0 +1,306 @@
+{
+  "NinferClient": {
+    "display_name": "NInfer - 客户端",
+    "description": "连接本地 NInfer 服务；首次使用时自动启动，空闲后自动关闭以释放显存。",
+    "inputs": {
+      "base_url": {
+        "name": "服务地址",
+        "tooltip": "NInfer 的 OpenAI 兼容端点"
+      },
+      "auto_start": {
+        "name": "自动启动",
+        "tooltip": "未运行时自动拉起服务。关闭后请自行用 infer.ps1 启动。"
+      },
+      "model_file": {
+        "name": "模型文件",
+        "tooltip": "本节点启动服务时加载的产物"
+      },
+      "idle_seconds": {
+        "name": "空闲关闭（秒）",
+        "tooltip": "无请求超过该时长后关闭服务。NInfer 无法卸载模型，停止进程是释放显存的唯一方式。"
+      },
+      "keep_alive": {
+        "name": "常驻",
+        "tooltip": "永不自动关闭"
+      },
+      "api_key": {
+        "name": "API 密钥",
+        "tooltip": "NInfer 完全忽略该请求头，本地使用占位符即可。保留此项是为了对接会校验凭据的 OpenAI 兼容服务。切勿留空，空密钥会导致连接失败。"
+      },
+      "max_retries": {
+        "name": "重试次数",
+        "tooltip": "连接失败或 5xx 响应时的重试次数"
+      },
+      "timeout": {
+        "name": "超时（秒）",
+        "tooltip": "整个请求的预算。这里的生成可能持续数分钟，建议留足。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "客户端",
+        "tooltip": "连接到 NInfer 对话节点"
+      }
+    }
+  },
+  "NinferChat": {
+    "display_name": "NInfer - 对话",
+    "description": "发起一次对话补全，可用参考图作为条件。",
+    "inputs": {
+      "client": {
+        "name": "客户端",
+        "tooltip": "来自 NInfer 客户端节点"
+      },
+      "prompt": {
+        "name": "提示词",
+        "tooltip": "用户消息"
+      },
+      "model": {
+        "name": "模型",
+        "tooltip": "留空则使用服务端报告的第一个模型"
+      },
+      "options": {
+        "name": "参数",
+        "tooltip": "来自各参数节点的设置链"
+      },
+      "history": {
+        "name": "历史",
+        "tooltip": "此前的对话"
+      },
+      "force_regen": {
+        "name": "强制重新生成",
+        "tooltip": "即使输入未变也重新调用模型"
+      },
+      "image_1": {
+        "name": "图像 1",
+        "tooltip": "参考图。按顺序接入；512px 每张约消耗 256 个提示词 token"
+      },
+      "image_2": {
+        "name": "图像 2",
+        "tooltip": "参考图。接好图像 1 后此项才有意义"
+      },
+      "image_3": {
+        "name": "图像 3",
+        "tooltip": "参考图。接好图像 2 后此项才有意义"
+      },
+      "image_4": {
+        "name": "图像 4",
+        "tooltip": "参考图。接好图像 3 后此项才有意义"
+      },
+      "language": {
+        "name": "语言",
+        "tooltip": "本节点输出的预览与状态文本所用语言。节点自身名称跟随界面语言。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "回复",
+        "tooltip": "可见的回复文本"
+      },
+      "1": {
+        "name": "思维链",
+        "tooltip": "模型产生的隐藏思考内容"
+      },
+      "2": {
+        "name": "历史",
+        "tooltip": "包含本轮在内的完整对话"
+      }
+    }
+  },
+  "NinferServer": {
+    "display_name": "NInfer - 服务控制",
+    "description": "直接驱动 NInfer 进程。适合希望工作流独占显卡、结束后归还的场景。",
+    "inputs": {
+      "action": {
+        "name": "操作",
+        "tooltip": "确保运行 / 停止 / 保持常驻 / 查看状态"
+      },
+      "model_file": {
+        "name": "模型文件",
+        "tooltip": "要加载的产物"
+      },
+      "force": {
+        "name": "强制结束",
+        "tooltip": "跳过优雅关闭，直接结束进程"
+      },
+      "language": {
+        "name": "语言",
+        "tooltip": "本节点输出的预览与状态文本所用语言。节点自身名称跟随界面语言。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "状态",
+        "tooltip": "操作结果"
+      },
+      "1": {
+        "name": "健康",
+        "tooltip": "服务是否响应"
+      }
+    }
+  },
+  "NinferOptionSystemPrompt": {
+    "display_name": "NInfer - 系统提示词",
+    "description": "设置系统提示词，可拼接一个 skill 文件。",
+    "inputs": {
+      "system_prompt": {
+        "name": "系统提示词",
+        "tooltip": "模型的行为指令"
+      },
+      "skill": {
+        "name": "Skill 文件",
+        "tooltip": "从 skills 目录选择的 Markdown 文件，其内容会追加到系统提示词之后"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionTemperature": {
+    "display_name": "NInfer - 温度",
+    "description": "采样温度。",
+    "inputs": {
+      "temperature": {
+        "name": "温度",
+        "tooltip": "越高越随机"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionMaxTokens": {
+    "display_name": "NInfer - 最大生成数",
+    "description": "回复的 token 上限。",
+    "inputs": {
+      "max_tokens": {
+        "name": "最大生成数",
+        "tooltip": "过小会导致可见回复为空，因为思考会先占满配额"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionReasoningEffort": {
+    "display_name": "NInfer - 思考强度",
+    "description": "思考预算。Qwen3.8 默认会深度思考，配额小时可见回复可能为空。",
+    "inputs": {
+      "reasoning_effort": {
+        "name": "思考强度",
+        "tooltip": "low 最快，xhigh 最深"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionTopP": {
+    "display_name": "NInfer - Top P",
+    "description": "核采样阈值。",
+    "inputs": {
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "1.0 表示关闭"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionTopK": {
+    "display_name": "NInfer - Top K",
+    "description": "每步可选的最高概率 token 数量。",
+    "inputs": {
+      "top_k": {
+        "name": "Top K",
+        "tooltip": "0 表示关闭"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionSeed": {
+    "display_name": "NInfer - 随机种子",
+    "description": "采样种子。",
+    "inputs": {
+      "seed": {
+        "name": "种子",
+        "tooltip": "相同种子与参数产生相同结果"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  },
+  "NinferOptionExtraBody": {
+    "display_name": "NInfer - 额外参数",
+    "description": "以 JSON 传入未覆盖的请求字段。",
+    "inputs": {
+      "extra_body": {
+        "name": "额外参数",
+        "tooltip": "JSON 对象，例如 {\"min_p\": 0.05}"
+      },
+      "other_options": {
+        "name": "参数",
+        "tooltip": "要合并的其他参数"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "参数",
+        "tooltip": "合并后的参数，继续向后传递"
+      }
+    }
+  }
+}

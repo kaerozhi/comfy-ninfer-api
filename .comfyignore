@@ -1,0 +1,6 @@
+# Development-only assets, kept in git but left out of the Registry archive.
+# (Registry packaging includes every git-tracked file by default; this subtracts.)
+
+# Marketing assets are referenced by URL, not shipped in the archive.
+icon.png
+banner.png

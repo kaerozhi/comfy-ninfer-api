@@ -1,0 +1,306 @@
+{
+  "NinferClient": {
+    "display_name": "NInfer - Client",
+    "description": "Connection to a local NInfer server. Starts it on first use and lets it shut down once the queue is idle.",
+    "inputs": {
+      "base_url": {
+        "name": "Base URL",
+        "tooltip": "NInfer's OpenAI-compatible endpoint"
+      },
+      "auto_start": {
+        "name": "Auto Start",
+        "tooltip": "Start the server if it is not running. Turn this off to use a server you launched yourself with infer.ps1."
+      },
+      "model_file": {
+        "name": "Model File",
+        "tooltip": "Artifact to load when this node starts the server"
+      },
+      "idle_seconds": {
+        "name": "Idle Shutdown (s)",
+        "tooltip": "Stop the server after this long with no request. NInfer cannot unload a model, so stopping the process is the only way to give the VRAM back to ComfyUI."
+      },
+      "keep_alive": {
+        "name": "Keep Alive",
+        "tooltip": "Never shut down automatically"
+      },
+      "api_key": {
+        "name": "API Key",
+        "tooltip": "NInfer ignores this header entirely, so the default placeholder is fine locally. It is here so the same nodes can talk to any OpenAI-compatible endpoint that does check credentials. Never leave it empty: an empty api_key makes the openai client fail to connect."
+      },
+      "max_retries": {
+        "name": "Max Retries",
+        "tooltip": "Retries on connection errors and 5xx responses"
+      },
+      "timeout": {
+        "name": "Timeout (s)",
+        "tooltip": "Whole-request budget. Generations here run for minutes, so keep this generous."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Client",
+        "tooltip": "Pass to a NInfer chat node"
+      }
+    }
+  },
+  "NinferChat": {
+    "display_name": "NInfer - Chat",
+    "description": "Generates text, optionally conditioned on reference images.",
+    "inputs": {
+      "client": {
+        "name": "Client",
+        "tooltip": "From a NInfer client node"
+      },
+      "prompt": {
+        "name": "Prompt",
+        "tooltip": "The user message"
+      },
+      "model": {
+        "name": "Model",
+        "tooltip": "Leave empty to use the first model the server reports"
+      },
+      "options": {
+        "name": "Options",
+        "tooltip": "Settings chain from the option nodes"
+      },
+      "history": {
+        "name": "History",
+        "tooltip": "Conversation so far"
+      },
+      "force_regen": {
+        "name": "Force Regen",
+        "tooltip": "Always call the model, even when nothing changed"
+      },
+      "image_1": {
+        "name": "Image 1",
+        "tooltip": "Reference image. Connect them in order; each slot adds about 256 prompt tokens at 512px"
+      },
+      "image_2": {
+        "name": "Image 2",
+        "tooltip": "Reference image. Meaningful once Image 1 is wired"
+      },
+      "image_3": {
+        "name": "Image 3",
+        "tooltip": "Reference image. Meaningful once Image 2 is wired"
+      },
+      "image_4": {
+        "name": "Image 4",
+        "tooltip": "Reference image. Meaningful once Image 3 is wired"
+      },
+      "language": {
+        "name": "Language",
+        "tooltip": "Language for the preview and status text this node prints. ComfyUI's own node labels follow the interface language."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Response",
+        "tooltip": "Visible reply text"
+      },
+      "1": {
+        "name": "Reasoning",
+        "tooltip": "Hidden thinking, when the model produced any"
+      },
+      "2": {
+        "name": "History",
+        "tooltip": "Conversation including this turn"
+      }
+    }
+  },
+  "NinferServer": {
+    "display_name": "NInfer - Server Control",
+    "description": "Drives the NInfer process directly. Useful when a workflow should hold the GPU itself and hand it back when finished.",
+    "inputs": {
+      "action": {
+        "name": "Action",
+        "tooltip": "ensure running / stop / keep alive / status"
+      },
+      "model_file": {
+        "name": "Model File",
+        "tooltip": "Artifact to load"
+      },
+      "force": {
+        "name": "Force Kill",
+        "tooltip": "Skip the graceful shutdown and kill the process outright"
+      },
+      "language": {
+        "name": "Language",
+        "tooltip": "Language for the preview and status text this node prints. ComfyUI's own node labels follow the interface language."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Status",
+        "tooltip": "Result of the action"
+      },
+      "1": {
+        "name": "Healthy",
+        "tooltip": "Server is answering"
+      }
+    }
+  },
+  "NinferOptionSystemPrompt": {
+    "display_name": "NInfer - System Prompt",
+    "description": "Sets the system prompt, optionally appending a skill file.",
+    "inputs": {
+      "system_prompt": {
+        "name": "System Prompt",
+        "tooltip": "Behaviour instructions for the model"
+      },
+      "skill": {
+        "name": "Skill",
+        "tooltip": "Markdown file from the skills directory; its contents are appended after the text above"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionTemperature": {
+    "display_name": "NInfer - Temperature",
+    "description": "Sampling temperature.",
+    "inputs": {
+      "temperature": {
+        "name": "Temperature",
+        "tooltip": "Higher is more random"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionMaxTokens": {
+    "display_name": "NInfer - Max Tokens",
+    "description": "Upper bound on the reply length.",
+    "inputs": {
+      "max_tokens": {
+        "name": "Max Tokens",
+        "tooltip": "Too low and the visible reply comes back empty, because thinking fills the budget first"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionReasoningEffort": {
+    "display_name": "NInfer - Reasoning Effort",
+    "description": "Thinking budget. Qwen3.8 thinks by default, so a small max_tokens can leave the reply empty.",
+    "inputs": {
+      "reasoning_effort": {
+        "name": "Reasoning Effort",
+        "tooltip": "low is fastest, xhigh thinks longest"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionTopP": {
+    "display_name": "NInfer - Top P",
+    "description": "Nucleus sampling threshold.",
+    "inputs": {
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "1.0 disables it"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionTopK": {
+    "display_name": "NInfer - Top K",
+    "description": "Number of top tokens kept at each step.",
+    "inputs": {
+      "top_k": {
+        "name": "Top K",
+        "tooltip": "0 disables it"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionSeed": {
+    "display_name": "NInfer - Seed",
+    "description": "Sampling seed.",
+    "inputs": {
+      "seed": {
+        "name": "Seed",
+        "tooltip": "Same seed and settings reproduce the same result"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  },
+  "NinferOptionExtraBody": {
+    "display_name": "NInfer - Extra Body",
+    "description": "Raw JSON for request fields not covered by the other nodes.",
+    "inputs": {
+      "extra_body": {
+        "name": "Extra Body",
+        "tooltip": "JSON object, for example {\"min_p\": 0.05}"
+      },
+      "other_options": {
+        "name": "Options",
+        "tooltip": "Other options to merge with"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Options",
+        "tooltip": "Merged options to forward"
+      }
+    }
+  }
+}
