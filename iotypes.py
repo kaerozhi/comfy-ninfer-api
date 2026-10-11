@@ -11,6 +11,25 @@ from comfy_api.latest import io
 ParamClient = io.Custom("NINFER_CLIENT")
 ParamOptions = io.Custom("NINFER_OPTIONS")
 ParamHistory = io.Custom("NINFER_HISTORY")
+# Dedicated control signal that no data input accepts, so a server-control
+# "done" output can never be mis-wired into places like a model id.
+ParamControl = io.Custom("NINFER_CONTROL")
+
+
+class ControlSignal:
+    """Payload for the Server Control node's `done` output.
+
+    Carries the human-readable report and the healthy flag for downstream
+    inspection, but its socket type (NINFER_CONTROL) means it is only ever
+    consumed as an ordering signal, never as a text/model input.
+    """
+
+    def __init__(self, report: str, healthy: bool) -> None:
+        self.report = report
+        self.healthy = healthy
+
+    def __str__(self) -> str:
+        return self.report
 
 
 class OptionsPayload:

@@ -9,17 +9,15 @@
 
 ## 一条规则避免所有接线 bug
 
-Server Control 节点的 **Status** 输出和 Chat 节点的 **Model** 输入**都是纯文本**。
-如果你从 Status 拉一根线到 Model，ComfyUI 会欣然接受，然后你的请求报错：
+天真的第一版把 Server Control 的 **Status / Healthy 输出**设成可连接的文本/布尔端口，
+结果有人错把它们接到 **Model** 输入，请求就报：
+`model '运行中\n健康: 是\n...' not found` —— 服务器把一段状态报告当成了模型 id。
 
-```
-openai.NotFoundError: model '运行中\n健康: 是\n进程号: ...' not found
-```
+这个坑已经从源头堵死了：**Server Control 不再输出可连接的文本数据**。状态报告只在
+节点体内以预览文本显示；它的唯一输出是专用控制信号（**Done**），只能用来标记"本节点
+已执行完"以控制执行顺序，物理上接不进任何数据输入。
 
-服务器把一段状态*报告*当成了*模型 id*。
-
-**永远不要接线 Status → Model。** 让 **Model 留空**；对话节点会自动探测服务器
-第一个模型 id。或者接一个来自客户端模型文件的真实模型 id。
+**仍然要记住：让对话节点的 Model 留空**，它会自动探测服务器第一个模型 id。
 
 ## `minimal_ninfer_chat.json` — 最少正确的图
 
@@ -42,20 +40,23 @@ NInfer - 客户端 ──Client──▶ NInfer - 对话 ──answer──▶ �
 加上 Server Control 节点和完整的参数链：
 
 ```text
-NInfer - 服务控制                     （独立节点：确保运行）
-
 NInfer - 客户端 ──Client──▶ NInfer - 对话 ──answer──▶ 预览 Any
-                                    ▲ options
+                                    ▲ options              │
+                                    │                     Run After（可折返接回服务控制）
   系统提示词 ─▶ 温度 ─▶ 最大tokens ─▶ 思考强度 ─▶ Top P ─▶ Top K ─▶ 种子 ─▶ 附加Body
 ```
 
 | 步骤 | 连接 | 为什么 |
 |---|---|---|
-| 1 | **服务控制**设为 `ensure running` | 保证对话节点触发前 NInfer 已就绪。它的 **Status / healthy** 是只读输出，**不要接到任何地方** |
+| 1 | **对话.answer** → **服务控制.Run After** | 让 Server Control 在对话产出回复后才执行。此例 action 设为 `stop`：对话一跑完就关掉 NInfer，把显存交还（适合立刻要跑吃显存下游的场景）。**注意：这条线要"绕回去"，从对话绕过来接** |
 | 2 | **客户端.Client** → **对话.Client** | 同最小图 |
 | 3 | 参数节点**从左到右串联**，最后一个的 **Options** 输出 → **对话.Options** | 每个参数节点读取前一个合并好的设置，再加上自己那一项。你可以把链中任意节点拿掉，仍然成立 |
 | 4 | **对话.answer** → **预览 Any.source** | 末端输出节点 |
 | 5 | **对话.Model 留空** | 自动探测（见上面的规则） |
+
+> ⚠️ 这个示例把 `action` 设成了 `stop`，是为了示范"对话后归还显存"。
+> 如果你只是想跑一次对话不求立刻释放，把 `action` 改回 `ensure running`，
+> 并把服务控制的 **Run After** 断开即可——那时它就是一个独立节点。
 
 ### 参数链详解
 

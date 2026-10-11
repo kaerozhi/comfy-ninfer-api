@@ -10,19 +10,18 @@ shape and every node's default value are visible and editable once loaded.
 
 ## The one rule that prevents every wiring bug
 
-The Server Control node's **Status** output and the Chat node's **Model** input
-are *both plain text.* If you drag a wire from Status to Model, ComfyUI happily
-accepts it and your request fails with:
+The naive first version shipped **Status / Healthy** outputs on the Server Control
+node as connectable text/boolean ports. Someone wired them into the Chat node's
+**Model** input and the request failed with:
+`model '运行中\n健康: 是\n进程号: ...' not found` — the server received a status
+*report* where it expected a *model id*.
 
-```
-openai.NotFoundError: model '运行中\n健康: 是\n进程号: ...' not found
-```
+That trap is now closed at the source: **Server Control no longer emits
+connectable text/boolean ports.** The status report is shown only as preview text
+inside the node body. Its sole output is a dedicated control signal (**Done**)
+used purely to sequence execution — it physically cannot feed a data input.
 
-The server received a status *report* where it expected a *model id*.
-
-**Never connect Status → Model.** Leaves **Model empty**; the chat node
-auto-detects the first model the server reports. Or connect a real model id from
-the Client's model files.
+**Still, keep Chat's Model blank** — it auto-detects the server's first model id.
 
 ## `minimal_ninfer_chat.json` — the smallest correct graph
 
@@ -46,20 +45,24 @@ feels broken, reduce to this graph first.
 Adds the Server Control node and the full options chain:
 
 ```text
-NInfer - Server Control                (standalone: ensure running)
-
 NInfer - Client ──Client──▶ NInfer - Chat ──answer──▶ Preview Any
-                                  ▲ options
-   System Prompt ─▶ Temperature ─▶ Max Tokens ─▶ Reasoning Effort ─▶ Top P ─▶ Top K ─▶ Seed ─▶ Extra Body
+                                  ▲ options              │
+                                   │                     Run After (daisy-chains back)
+  System Prompt ─▶ Temperature ─▶ Max Tokens ─▶ Reasoning Effort ─▶ Top P ─▶ Top K ─▶ Seed ─▶ Extra Body
 ```
 
 | Step | Connection | Why |
 |---|---|---|
-| 1 | **Server Control** set to `ensure running` | Makes sure NInfer is up before the chat node fires. Its wires are **Status / healthy** — read-only outputs, do not connect them to anything |
+| 1 | **Chat.answer** → **Server Control.Run After** | Makes Server Control run only after the chat produces its reply. This example sets action to `stop`, so NInfer is torn down as soon as the reply lands, returning VRAM to any GPU-hungry downstream. Note this wire *doubles back* from the chat |
 | 2 | **Client.Client** → **Chat.Client** | As in the minimal graph. |
 | 3 | Options **chained left → right**, last one's **Options** output → **Chat.Options** | Each option node reads the previous node's merged settings and adds its own. You can drop any node from the middle of the chain and it still works. |
 | 4 | **Chat.answer** → **Preview Any.source** | Terminal output node. |
 | 5 | Leave **Chat.Model** blank | Auto-detect (see the rule above). |
+
+> ⚠️ This example sets `action` to `stop` to demonstrate returning VRAM after a
+> chat. If you just want to run a chat without freeing memory immediately, set
+> `action` back to `ensure running` and disconnect the Server Control's **Run
+> After** wire — it then behaves as a standalone node.
 
 ### The options chain in detail
 

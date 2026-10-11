@@ -2,7 +2,8 @@
   "1": {
     "class_type": "NinferServer",
     "inputs": {
-      "action": "ensure running",
+      "trigger": ["11", 0],
+      "action": "stop",
       "model_file": "Huihui-Qwen3.8-27B-abliterated-Swift-1.5-GSQ-RCO-IQ3_S-mtp.ninfer",
       "force": false,
       "language": "zh"

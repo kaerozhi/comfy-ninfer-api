@@ -6,10 +6,18 @@ from comfy_api.latest import io, ui
 
 from . import lifecycle
 from .i18n import DEFAULT_LANGUAGE, LANGUAGES, tr
+from .iotypes import ControlSignal, ParamControl
 
 
 class NinferServer(io.ComfyNode):
-    """Start, stop, or wait on the server from inside a graph."""
+    """Start, stop, or wait on the server from inside a graph.
+
+    Sequencing: this node runs only after the input wired into `trigger`
+    finishes, and anything that consumes the `done` output runs only after this
+    node finishes. Wire "Chat.Response" (or the client) into `trigger` to stop
+    the server as soon as a chat reply is produced, then feed `done` to the
+    GPU-hungry node that should take the freed VRAM.
+    """
 
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -18,10 +26,21 @@ class NinferServer(io.ComfyNode):
             display_name="NInfer - Server Control",
             category="NInfer",
             description=(
-                "Drives the NInfer process directly. Useful when a workflow should "
-                "hold the GPU itself and hand it back when finished."
+                "Drives the NInfer process directly. The `trigger` input sets "
+                "when this node runs; `done` marks when it has finished. "
+                "Status is shown here as preview text, not as a connectable port."
             ),
             inputs=[
+                io.AnyType.Input(
+                    id="trigger",
+                    display_name="Run After",
+                    optional=True,
+                    tooltip=(
+                        "Anything can feed this. Its only job is ordering: this "
+                        "node runs after the wired input finishes. Wire a chat "
+                        "reply here to `stop` as soon as the reply is produced."
+                    ),
+                ),
                 io.Combo.Input(
                     id="action",
                     display_name="Action",
@@ -54,8 +73,15 @@ class NinferServer(io.ComfyNode):
                 ),
             ],
             outputs=[
-                io.String.Output(id="status", display_name="Status", tooltip="Result of the action"),
-                io.Boolean.Output(id="healthy", display_name="Healthy", tooltip="Server is answering"),
+                ParamControl.Output(
+                    id="done",
+                    display_name="Done",
+                    tooltip=(
+                        "Sequencing signal only. Downstream nodes wait for it. "
+                        "It is a dedicated control socket and cannot feed data "
+                        "inputs like a model id."
+                    ),
+                ),
             ],
         )
 
@@ -66,6 +92,8 @@ class NinferServer(io.ComfyNode):
         model_file: str,
         force: bool = False,
         language: str = DEFAULT_LANGUAGE,
+        trigger: object = None,
+        **kwargs: object,
     ) -> io.NodeOutput:
         if action == "stop":
             stopped = lifecycle.stop(force=force)
@@ -81,7 +109,8 @@ class NinferServer(io.ComfyNode):
             text = tr("running", language)
 
         snapshot = lifecycle.status()
-        healthy = tr("yes" if snapshot["healthy"] else "no", language)
+        ready = snapshot["healthy"]
+        healthy = tr("yes" if ready else "no", language)
         busy = tr("yes" if snapshot["comfy_busy"] else "no", language)
         report = (
             f"{text}\n"
@@ -91,4 +120,9 @@ class NinferServer(io.ComfyNode):
             f"{tr('idle', language)}: {snapshot['idle_seconds']}s / {snapshot['idle_limit']}s\n"
             f"{tr('comfy_busy', language)}: {busy}"
         )
-        return io.NodeOutput(report, snapshot["healthy"], ui=ui.PreviewText(report))
+        # A dedicated control signal carries the done marker; the status report
+        # is shown as preview text only, so it cannot be mis-wired anywhere.
+        return io.NodeOutput(
+            ControlSignal(report, ready),
+            ui=ui.PreviewText(report),
+        )

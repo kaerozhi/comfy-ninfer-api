@@ -109,8 +109,12 @@
   },
   "NinferServer": {
     "display_name": "NInfer - Server Control",
-    "description": "Drives the NInfer process directly. Useful when a workflow should hold the GPU itself and hand it back when finished.",
+    "description": "Drives the NInfer process directly. The `trigger` input sets when this node runs; `done` signals completion. Status is shown as preview text, not a connectable port.",
     "inputs": {
+      "trigger": {
+        "name": "Run After",
+        "tooltip": "Ordering signal: this node runs after the wired input finishes. Wire a chat reply here to stop the server as soon as it is produced."
+      },
       "action": {
         "name": "Action",
         "tooltip": "ensure running / stop / keep alive / status"
@@ -130,12 +134,8 @@
     },
     "outputs": {
       "0": {
-        "name": "Status",
-        "tooltip": "Result of the action"
-      },
-      "1": {
-        "name": "Healthy",
-        "tooltip": "Server is answering"
+        "name": "Done",
+        "tooltip": "Sequencing signal only. Downstream nodes wait for it. A dedicated control socket - cannot feed data inputs like a model id."
       }
     }
   },

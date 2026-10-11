@@ -1,7 +1,7 @@
 [project]
 name = "ninfer-api"
 description = "Chat with a local NInfer LLM server from ComfyUI: streaming-free OpenAI-compatible chat, multi-image vision input, skill files loaded from disk, a chained options panel (temperature / max tokens / reasoning effort / top-k / top-p / seed / extra body), and process lifecycle control that starts the server on demand and shuts it down when idle so it can share one GPU with ComfyUI. English/Chinese UI."
-version = "1.0.1"
+version = "1.0.2"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = ["openai"]

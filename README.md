@@ -44,12 +44,16 @@ Ready-to-run graphs live in [`workflows/`](workflows/). Open one by dragging the
 | [`workflows/minimal_ninfer_chat.json`](workflows/minimal_ninfer_chat.json) | Smallest correct wiring: Client → Chat → preview |
 | [`workflows/full_ninfer_chat.json`](workflows/full_ninfer_chat.json) | All nodes connected, including the options chain and Server |
 
-**The #1 wiring mistake:** the Server Control node's **Status** output and the
-Chat node's **Model** input are *both* text. If you connect Status → Model, the
-request fails with an `openai.NotFoundError` (`model_not_found` — the server
-recieves the status text instead of a model id). Leave **Model empty** and the
-chat node auto-detects the first model the server reports, or connect a real
-model id from the Client's model files.
+**The #1 wiring mistake (now impossible):** the first version of the Server
+Control node shipped **Status / Healthy** text/boolean outputs, and people
+connected them into the Chat node's **Model** input — the request then failed
+with `openai.NotFoundError` because the server received the status report as a
+model id. That trap is fixed at the source: **Server Control no longer emits
+connectable text/boolean ports.** Its status report is preview text inside the
+node body, and its only output is a dedicated `NINFER_CONTROL` signal used for
+execution ordering. Leave **Model empty** and the chat node auto-detects the
+first model the server reports (or connect a real model id from the Client's
+model files).
 
 See [`workflows/README.md`](workflows/README.md) for a step-by-step diagram of
 both graphs.
@@ -112,6 +116,13 @@ generation.
 
 Explicit control for workflows that want to manage the GPU themselves: `ensure
 running`, `stop`, `keep alive`, and `status`.
+
+Its **Run After** input is an ordering signal: pass any output into it and this
+node runs only after that output's node finishes. Its only output, **Done**, is a
+dedicated `NINFER_CONTROL` signal that downstream nodes can wait on — neither
+port accepts or produces data, so the node's role is purely sequencing + process
+control. The status report is shown as preview text in the node body, not as a
+connectable port.
 
 ### NInfer - Options / \*
 

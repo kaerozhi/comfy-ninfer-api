@@ -41,11 +41,12 @@ ComfyUI 自带的 `openai`。
 | [`workflows/minimal_ninfer_chat.json`](workflows/minimal_ninfer_chat.json) | 最少接线：客户端 → 对话 → 预览 |
 | [`workflows/full_ninfer_chat.json`](workflows/full_ninfer_chat.json) | 全部节点接上，含参数链和服务控制 |
 
-**最常见的接线错误：** Server Control 节点的 **Status** 输出和 Chat 节点的
-**Model** 输入都是文本。若是把 Status → Model 接到一起，请求会以
-`openai.NotFoundError`（`model_not_found`）失败——服务器收到的是状态文本而不是
-模型 id。**Model 留空**即可，对话节点会自动探测服务器第一个模型 id；或者接一个
-来自客户端模型文件的真实模型 id。
+**最常见的接线错误（现已堵死）：** Server Control 首版把 **Status / Healthy** 设成可连接的
+文本/布尔输出，有人把它们接到 Chat 节点的 **Model** 输入，请求就以
+`openai.NotFoundError`（`model_not_found`）失败——服务器收到的是状态报告而不是
+模型 id。这个坑已从源头消除：**Server Control 不再输出可连接的文本/布尔端口**，状态报告
+只在节点体内以预览显示，唯一输出是专用控制信号（`NINFER_CONTROL`），只用于执行排序。
+**Model 留空**即可自动探测服务器第一个模型 id；或接一个来自客户端模型文件的真实模型 id。
 
 详细接线图见 [`workflows/README.md`](workflows/README.md)。
 
@@ -96,6 +97,11 @@ ComfyUI 自带的 `openai`。
 ### NInfer - 服务控制
 
 给想自己管显存的工作流用：`ensure running`、`stop`、`keep alive`、`status`。
+
+**在之后运行（Run After）** 输入是顺序信号：任意输出接进来后，本节点只有在该输出
+对应的节点完成之后才执行。唯一输出 **Done** 是专用 `NINFER_CONTROL` 信号，供下游节点
+等待——两者都不产生、也不接受数据，所以本节点纯粹用于排序与进程控制。状态报告以
+预览文本显示在节点体内，不是可连接的端口。
 
 ### NInfer - 参数 / \*
 
