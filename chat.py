@@ -21,6 +21,37 @@ from .iotypes import HistoryPayload, OptionsPayload, ParamClient, ParamHistory, 
 # at twelve. Each 512px image costs about 256 prompt tokens.
 IMAGE_SLOTS = 4
 
+# The `openai` SDK validates create() kwargs against a fixed set and raises
+# TypeError for anything else (e.g. top_k). These are the sampling knobs the
+# SDK accepts natively; any other key (top_k, or anything typed into the Extra
+# Body node) is forwarded through extra_body so it still reaches the server.
+SDK_NATIVE_PARAMS = {
+    "max_tokens", "temperature", "top_p", "reasoning_effort", "seed",
+    "max_completion_tokens", "frequency_penalty", "presence_penalty",
+    "stop", "stream", "logit_bias", "logprobs", "top_logprobs", "n",
+    "store", "user", "response_format", "tools", "tool_choice", "modalities",
+    "audio", "prediction", "metadata", "parallel_tool_calls", "service_tier",
+    "function_call", "functions", "prompt_cache_key", "safety_identifier",
+    "verbosity", "web_search_options",
+}
+
+
+def _split_settings_extra_body(settings: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Split merged options into {create() kwargs} and {extra_body fields}.
+
+    `extra_body` is the only sanctioned escape hatch in the OpenAI SDK: its
+    contents are merged into the top-level JSON request body, so NInfer still
+    receives non-SDK sampling parameters like top_k.
+    """
+    native: dict[str, Any] = {}
+    extra: dict[str, Any] = {}
+    for key, value in settings.items():
+        if key in SDK_NATIVE_PARAMS:
+            native[key] = value
+        else:
+            extra[key] = value
+    return native, extra
+
 
 def comfy_image_to_data_url(image: torch.Tensor) -> str:
     """ComfyUI IMAGE tensor (B,H,W,C float 0..1) to a PNG data URL."""
@@ -258,11 +289,13 @@ class NinferChat(io.ComfyNode):
 
         lifecycle.enter()
         try:
+            native_kwargs, extra_body = _split_settings_extra_body(settings)
             completion = client.chat.completions.create(
                 model=resolved_model,
                 messages=messages,
                 n=1,
-                **settings,
+                extra_body=extra_body or None,
+                **native_kwargs,
             )
         finally:
             lifecycle.leave()
