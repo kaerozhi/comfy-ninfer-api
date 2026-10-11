@@ -41,6 +41,13 @@ _STRINGS: dict[str, tuple[str, str]] = {
         "server did not become healthy in time",
         "服务未能在超时内就绪",
     ),
+    "bad_model_input": (
+        "The Model input looks like a server status report, not a model id "
+        "({value}...). Leave it empty to auto-detect. If you connected the Server "
+        "Control node's Status output to Model, disconnect that wire.",
+        "Model 输入看起来像是服务器状态报告，而不是模型 id（{value}...）。请留空让系统自动检测，"
+        "或检查是否误把 Server Control 节点的 Status 输出接到了 Model 上（请断开这根连线）。",
+    ),
 }
 
 

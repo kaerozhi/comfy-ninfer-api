@@ -246,7 +246,15 @@ class NinferChat(io.ComfyNode):
         else:
             messages.append({"role": "user", "content": prompt})
 
-        resolved_model = model.strip() or (discover_models()[0] if discover_models() else "ninfer")
+        resolved_model = model.strip()
+        if not resolved_model:
+            available = discover_models()
+            resolved_model = available[0] if available else "ninfer"
+        elif "\n" in resolved_model or "进程号" in resolved_model or "healthy" in resolved_model.lower():
+            # A multi-line server report was wired into the model input — most
+            # likely the NInfer Server Control node's Status output. Surface that
+            # instead of sending the blob to /v1/chat/completions and eating a 404.
+            raise ValueError(tr("bad_model_input", language, value=resolved_model[:80]))
 
         lifecycle.enter()
         try:
